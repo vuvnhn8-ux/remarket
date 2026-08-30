@@ -22,6 +22,24 @@ import { hashPassword } from '../../lib/security/hash';
 
 const DEMO_CATEGORIES: ProductCategory[] = ['カメラ', 'パソコン', 'ゲーム'];
 
+const SIM_CATEGORY_IMAGES: Partial<Record<ProductCategory, string[]>> = {
+  カメラ: [
+    'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1502982720700-bfff97f2ecac?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?auto=format&fit=crop&w=800&q=80',
+  ],
+  パソコン: [
+    'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=800&q=80',
+  ],
+  ゲーム: [
+    'https://images.unsplash.com/photo-1486401899868-0e435ed85128?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1592840496694-26d035b52b48?auto=format&fit=crop&w=800&q=80',
+  ],
+};
+
 const DEMO_ITEMS: {
   brand: string;
   model: string;
@@ -51,6 +69,8 @@ export function generateSimulationSeed(): SeedData {
 
   DEMO_ITEMS.forEach((item, i) => {
     const idx = String(i + 1).padStart(4, '0');
+    const catImages = SIM_CATEGORY_IMAGES[item.category] || SIM_CATEGORY_IMAGES['カメラ'];
+    const productImages = [catImages[i % catImages.length], catImages[(i + 1) % catImages.length]];
     const acq: AcquisitionRecord = {
       id: `SIM-ACQ-${idx}`,
       customerName: `デモ顧客 ${i + 1}`,
@@ -65,7 +85,7 @@ export function generateSimulationSeed(): SeedData {
       estimatedMarketPrice: Math.round(item.price * 1.3),
       initialCondition: item.rank,
       status: '販売中',
-      images: [],
+      images: productImages,
     };
     const insp: InspectionRecord = {
       id: `SIM-INSP-${idx}`,
@@ -120,8 +140,8 @@ export function generateSimulationSeed(): SeedData {
       conditionRank: item.rank,
       stock: i % 4 === 0 ? 0 : 1,
       isSold: i % 4 === 0,
-      images: [],
-      featuredImage: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80',
+      images: productImages,
+      featuredImage: productImages[0],
       cosmeticSummary: `【デモ】${item.rank}ランクシナリオ`,
       functionalSummary: '【デモ】全機能正常',
       includedAccessories: ['付属品一式（デモ）'],
