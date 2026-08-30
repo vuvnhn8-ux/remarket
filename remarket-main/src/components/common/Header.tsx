@@ -376,7 +376,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Main Navigation Bar */}
-      <div className={`max-w-7xl mx-auto px-4 sm:px-6 transition-all duration-300 ${collapsed ? 'py-2' : 'py-3.5'}`}>
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 transition-all duration-300 ${collapsed ? 'pt-[5px] pb-[15px]' : 'py-3.5'}`}>
         <div className={`flex items-center justify-between transition-all duration-300 ${collapsed ? 'gap-2' : 'gap-6'}`}>
           {/* Brand Logo */}
           <div className="flex items-center gap-3 shrink-0">
