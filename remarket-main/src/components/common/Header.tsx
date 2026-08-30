@@ -418,7 +418,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Center Search Bar */}
           <div className={`flex-1 hidden md:flex justify-center transition-all duration-300 ${collapsed ? 'max-w-md' : 'max-w-xl'}`}>
             <div className="relative flex items-center w-full max-w-xl">
-              <Search className={`absolute left-3.5 text-gray-400 pointer-events-none z-10 transition-all ${collapsed ? 'w-3.5 h-3.5 top-2.5' : 'w-4 h-4 top-3'}`} />
+              <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10 transition-all ${collapsed ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />
               <input
                 type="text"
                 value={searchQuery}
@@ -543,7 +543,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Mobile Search Bar */}
         <div className="mt-2.5 md:hidden">
           <div className="relative flex items-center">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400 pointer-events-none" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
