@@ -256,14 +256,8 @@ function AppRoot() {
   };
 
   return (
-    <div className="min-h-screen ambient-app-bg text-[#0f172a] flex flex-col font-sans selection:bg-emerald-500 selection:text-white relative overflow-x-hidden">
-      {/* Soft Ambient Background Elements (Pure CSS, pointer-events-none) */}
-      <div className="fixed inset-0 bg-mesh-dots mask-radial-faded pointer-events-none opacity-30 z-0" />
-      <div className="fixed -top-40 -left-40 w-96 h-96 bg-emerald-400/5 rounded-full blur-3xl pointer-events-none z-0" />
-      <div className="fixed top-1/4 -right-40 w-96 h-96 bg-indigo-400/5 rounded-full blur-3xl pointer-events-none z-0" />
-      <div className="fixed bottom-10 left-1/3 w-[500px] h-64 bg-slate-300/10 rounded-full blur-3xl pointer-events-none z-0" />
-
-      {/* Universal Header */}
+    <div className="min-h-screen ambient-app-bg text-[#0f172a] flex flex-col font-sans selection:bg-emerald-500 selection:text-white relative">
+      {/* Universal Header (outside overflow container so sticky works) */}
       <Header
         currentRole={role}
         onRoleChange={handleRoleChange}
@@ -290,6 +284,14 @@ function AppRoot() {
         onRunDemoScenario={handleRunDemoScenario}
         onResetDb={handleResetDatabase}
       />
+
+      {/* Scroll-safe content wrapper (clips horizontal overflow without breaking sticky) */}
+      <div className="relative overflow-x-hidden flex-1 flex flex-col">
+        {/* Soft Ambient Background Elements (Pure CSS, pointer-events-none) */}
+        <div className="fixed inset-0 bg-mesh-dots mask-radial-faded pointer-events-none opacity-30 z-0" />
+        <div className="fixed -top-40 -left-40 w-96 h-96 bg-emerald-400/5 rounded-full blur-3xl pointer-events-none z-0" />
+        <div className="fixed top-1/4 -right-40 w-96 h-96 bg-indigo-400/5 rounded-full blur-3xl pointer-events-none z-0" />
+        <div className="fixed bottom-10 left-1/3 w-[500px] h-64 bg-slate-300/10 rounded-full blur-3xl pointer-events-none z-0" />
 
       {/* Live Automation & Simulation Status Ribbon */}
       <SimulationStatusRibbon />
@@ -428,6 +430,7 @@ function AppRoot() {
           </>
         )}
       </main>
+      </div>
 
       {/* Cart Drawer */}
       <CartDrawer
