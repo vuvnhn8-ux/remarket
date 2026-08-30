@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   ShoppingCart,
@@ -71,6 +71,22 @@ export const Header: React.FC<HeaderProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDemoMenuOpen, setIsDemoMenuOpen] = useState(false);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const lastScrollY = React.useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY > lastScrollY.current && currentY > 120) {
+        setCollapsed(true);
+      } else if (currentY < lastScrollY.current) {
+        setCollapsed(false);
+      }
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -81,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs">
       {/* Top Demo & Role & Language Control Bar */}
-      <div className="bg-slate-900 text-slate-200 px-4 py-1.5 text-xs">
+      <div className={`bg-slate-900 text-slate-200 px-4 py-1.5 text-xs overflow-hidden transition-[max-height,opacity] duration-300 ${collapsed ? 'max-h-0 py-0 opacity-0' : 'max-h-20 opacity-100'}`}>
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           {/* Tagline & Business Concept */}
           <div className="flex items-center gap-3">
@@ -334,7 +350,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5">
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 transition-all duration-300 ${collapsed ? 'py-2' : 'py-3.5'}`}>
         <div className="flex items-center justify-between gap-6">
           {/* Brand Logo */}
           <div className="flex items-center gap-3 shrink-0">
@@ -345,18 +361,20 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <img
                 src="/favicon.svg"
-                alt="Re:Market logo"
-                className="w-10 h-10 shrink-0"
+                alt="ReMarket logo"
+                className={`shrink-0 transition-all duration-300 ${collapsed ? 'w-7 h-7' : 'w-10 h-10'}`}
                 width={40}
                 height={40}
               />
               <div className="flex flex-col">
-                <span className="text-2xl font-black tracking-tighter text-emerald-600 leading-none">
+                <span className={`font-black tracking-tighter text-emerald-600 leading-none transition-all duration-300 ${collapsed ? 'text-lg' : 'text-2xl'}`}>
                   {t('brand.title')}
                 </span>
-                <span className="text-[10px] text-gray-500 font-medium tracking-widest leading-tight mt-0.5">
-                  {t('brand.tagline')}
-                </span>
+                {!collapsed && (
+                  <span className="text-[10px] text-gray-500 font-medium tracking-widest leading-tight mt-0.5">
+                    {t('brand.tagline')}
+                  </span>
+                )}
               </div>
             </button>
           </div>
@@ -555,7 +573,7 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         {/* Sub-Navigation Categories / Internal View Links */}
-        <div className="mt-2.5 pt-2 border-t border-slate-100 hidden sm:flex items-center justify-between text-xs text-slate-600">
+        <div className={`mt-2.5 pt-2 border-t border-slate-100 hidden sm:flex items-center justify-between text-xs text-slate-600 overflow-hidden transition-[max-height,opacity,margin,padding] duration-300 ${collapsed ? 'max-h-0 mt-0 pt-0 opacity-0 border-transparent' : 'max-h-16 opacity-100'}`}>
           {/* Customer Category Navigation */}
           {currentRole === 'customer' && (
             <div className="flex items-center gap-4 overflow-x-auto whitespace-nowrap pb-1">
