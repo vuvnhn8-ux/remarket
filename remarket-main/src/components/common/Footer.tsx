@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, Truck, HeartHandshake, Phone, Mail } from 'lucide-react';
+import { ShieldCheck, Truck, HeartHandshake, Mail } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 export const Footer: React.FC = () => {
@@ -61,10 +61,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="text-[11px] text-gray-400 space-y-1">
               <p className="flex items-center gap-1.5">
-                <Phone className="w-3 h-3 text-gray-500" /> 03-1234-5678 (平日 10:00〜18:00 JST)
-              </p>
-              <p className="flex items-center gap-1.5">
-                <Mail className="w-3 h-3 text-gray-500" /> support@remarket-reuse.jp
+                <Mail className="w-3 h-3 text-gray-500" /> contact@hoangvuvan.xyz
               </p>
             </div>
           </div>
@@ -100,14 +97,35 @@ export const Footer: React.FC = () => {
 
           <div>
             <h5 className="font-bold text-white mb-3 text-xs">
-              {language === 'ja' ? 'コンプライアンス・古物営業法' : 'Legal & Compliance'}
+              {language === 'ja' ? '制作・ポートフォリオ' : 'Creator & Portfolio'}
             </h5>
             <div className="bg-white/5 p-3 rounded-xl border border-white/10 text-[11px] text-gray-300 space-y-1.5">
-              <p className="font-semibold text-white">{language === 'ja' ? '古物商許可番号' : 'Antique Dealer License'}</p>
-              <p className="text-gray-400">東京都公安委員会 第301000000000号</p>
-              <p className="font-semibold text-white mt-2">{language === 'ja' ? '運営会社' : 'Operator'}</p>
-              <p className="text-gray-400">Re:Market Inc. Reuse E-Commerce Div.</p>
-              <p className="text-gray-400">〒150-0002 Shibuya, Tokyo, Japan</p>
+              <p className="font-semibold text-white">{language === 'ja' ? 'ポートフォリオ' : 'Portfolio'}</p>
+              <p>
+                <a
+                  href="https://hoangvuvan.xyz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-400 hover:text-emerald-300 hover:underline break-all"
+                >
+                  hoangvuvan.xyz
+                </a>
+              </p>
+              <p className="font-semibold text-white mt-2">{language === 'ja' ? 'Webサイト制作のご相談' : 'Web Development Inquiry'}</p>
+              <p className="text-gray-400 leading-relaxed">
+                {language === 'ja'
+                  ? 'オリジナルのWebサービス・ECサイトの制作をご希望の方は、お気軽にご連絡ください。'
+                  : 'Interested in building your own web app or EC site? Feel free to reach out.'}
+              </p>
+              <p className="flex items-center gap-1.5 pt-1">
+                <Mail className="w-3 h-3 text-gray-500" />
+                <a
+                  href="mailto:contact@hoangvuvan.xyz"
+                  className="text-emerald-400 hover:text-emerald-300 hover:underline break-all"
+                >
+                  contact@hoangvuvan.xyz
+                </a>
+              </p>
             </div>
             <div className="mt-3 flex flex-wrap gap-2 text-[10px] text-gray-500">
               <span className="hover:text-gray-300 cursor-pointer">{t('footer.law')}</span>

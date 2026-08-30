@@ -77,29 +77,37 @@ export const Header: React.FC<HeaderProps> = ({
   const collapsedRef = React.useRef(false);
 
   useEffect(() => {
-    const THRESHOLD = 200;
-    const HIDE_GAP = 120;
-    const SHOW_GAP = 80;
+    const SHOW_UP = 25;
     const handleScroll = () => {
       const currentY = window.scrollY;
       const delta = currentY - lastScrollY.current;
       lastScrollY.current = currentY;
-      scrollAccum.current += delta;
 
-      if (!collapsedRef.current && currentY > THRESHOLD && scrollAccum.current > HIDE_GAP) {
+      if (currentY <= 15) {
+        if (collapsedRef.current) {
+          collapsedRef.current = false;
+          setCollapsed(false);
+        }
+        scrollAccum.current = 0;
+        return;
+      }
+
+      // Collapse as soon as we scroll downward past a small threshold
+      if (!collapsedRef.current && delta > 0) {
         collapsedRef.current = true;
         setCollapsed(true);
         scrollAccum.current = 0;
-      } else if (collapsedRef.current && scrollAccum.current < -SHOW_GAP) {
-        collapsedRef.current = false;
-        setCollapsed(false);
-        scrollAccum.current = 0;
+        return;
       }
 
-      if (currentY <= 0 && collapsedRef.current) {
-        collapsedRef.current = false;
-        setCollapsed(false);
-        scrollAccum.current = 0;
+      // Expand only after scrolling up by a slight amount (hysteresis)
+      if (collapsedRef.current) {
+        scrollAccum.current += delta;
+        if (scrollAccum.current < -SHOW_UP) {
+          collapsedRef.current = false;
+          setCollapsed(false);
+          scrollAccum.current = 0;
+        }
       }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -369,7 +377,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Main Navigation Bar */}
       <div className={`max-w-7xl mx-auto px-4 sm:px-6 transition-all duration-300 ${collapsed ? 'py-2' : 'py-3.5'}`}>
-        <div className="flex items-center justify-between gap-6">
+        <div className={`flex items-center justify-between transition-all duration-300 ${collapsed ? 'gap-2' : 'gap-6'}`}>
           {/* Brand Logo */}
           <div className="flex items-center gap-3 shrink-0">
             <button
@@ -397,8 +405,8 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
           {/* Center Search Bar */}
-          <div className="flex-1 max-w-xl hidden md:block">
-            <div className="relative flex items-center">
+          <div className={`flex-1 hidden md:flex justify-center transition-all duration-300 ${collapsed ? 'opacity-0 w-0 overflow-hidden shrink-0' : 'opacity-100 max-w-xl'}`}>
+            <div className="relative flex items-center w-full max-w-xl">
               <Search className="w-4 h-4 absolute left-3.5 top-3 text-gray-400 pointer-events-none z-10" />
               <input
                 type="text"
@@ -406,7 +414,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onChange={(e) => onSearchChange(e.target.value)}
                 onKeyDown={handleSearchKeyPress}
                 placeholder={t('nav.searchPlaceholder')}
-                className="w-full bg-gray-100 border-none rounded-full py-2 pl-10 pr-28 text-sm text-gray-800 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-gray-300 transition-all outline-hidden"
+                className={`w-full bg-gray-100 border-none rounded-full pl-10 pr-28 text-sm text-gray-800 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-gray-300 transition-all outline-hidden ${collapsed ? 'py-1.5' : 'py-2'}`}
               />
               {/* Category Quick Selector */}
               <div className="absolute right-1 flex items-center">
@@ -455,15 +463,16 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Right Action Icons */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className={`flex items-center transition-all duration-300 ${collapsed ? 'gap-1.5 sm:gap-2' : 'gap-2 sm:gap-4'}`}>
             {/* AI Concierge Shopping Assistant Button */}
             <button
               type="button"
               onClick={onOpenAiAssistant}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white rounded-full text-xs font-bold shadow-xs transition cursor-pointer"
+              className={`inline-flex items-center bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white rounded-full text-xs font-bold shadow-xs transition cursor-pointer ${collapsed ? 'p-2' : 'gap-1.5 px-3.5 py-1.5'}`}
+              title={t('nav.aiConsult')}
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-              <span className="hidden sm:inline">{t('nav.aiConsult')}</span>
+              <Sparkles className={`text-amber-300 animate-pulse ${collapsed ? 'w-3.5 h-3.5' : 'w-3.5 h-3.5'}`} />
+              <span className={`hidden sm:inline ${collapsed ? 'hidden' : ''}`}>{t('nav.aiConsult')}</span>
             </button>
 
             {/* Favorites */}
@@ -473,8 +482,8 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex flex-col items-center p-1 text-gray-700 hover:text-black transition cursor-pointer relative"
               title={t('nav.favorites')}
             >
-              <Heart className="w-5 h-5 text-gray-700 hover:text-black transition" />
-              <span className="text-[9px] mt-0.5 text-gray-500 font-medium hidden sm:inline">{t('nav.favorites')}</span>
+              <Heart className={`text-gray-700 hover:text-black transition ${collapsed ? 'w-4 h-4' : 'w-5 h-5'}`} />
+              {!collapsed && <span className="text-[9px] mt-0.5 text-gray-500 font-medium hidden sm:inline">{t('nav.favorites')}</span>}
               {favoritesCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                   {favoritesCount}
@@ -489,8 +498,8 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex flex-col items-center p-1 text-gray-700 hover:text-black transition cursor-pointer relative"
               title={t('nav.cart')}
             >
-              <ShoppingCart className="w-5 h-5 text-gray-700 hover:text-black transition" />
-              <span className="text-[9px] mt-0.5 text-gray-500 font-medium hidden sm:inline">{t('nav.cart')}</span>
+              <ShoppingCart className={`text-gray-700 hover:text-black transition ${collapsed ? 'w-4 h-4' : 'w-5 h-5'}`} />
+              {!collapsed && <span className="text-[9px] mt-0.5 text-gray-500 font-medium hidden sm:inline">{t('nav.cart')}</span>}
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full min-w-[16px] text-center">
                   {cartCount}
@@ -502,11 +511,11 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('mypage')}
-              className="flex items-center space-x-1.5 bg-gray-900 text-white px-4 py-1.5 rounded-full cursor-pointer hover:bg-gray-800 transition-colors text-xs font-semibold"
+              className={`flex items-center bg-gray-900 text-white rounded-full cursor-pointer hover:bg-gray-800 transition-colors text-xs font-semibold gap-1.5 ${collapsed ? 'p-2' : 'px-4 py-1.5'}`}
               title={t('nav.myPage')}
             >
-              <User className="w-3.5 h-3.5 text-gray-300" />
-              <span>{t('nav.myPage')}</span>
+              <User className={`text-gray-300 ${collapsed ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} />
+              <span className={`hidden sm:inline ${collapsed ? 'hidden' : ''}`}>{t('nav.myPage')}</span>
             </button>
 
             {/* Mobile Menu Trigger */}
