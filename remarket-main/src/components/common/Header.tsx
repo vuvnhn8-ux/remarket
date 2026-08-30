@@ -77,8 +77,10 @@ export const Header: React.FC<HeaderProps> = ({
   const collapsedRef = React.useRef(false);
 
   useEffect(() => {
-    const SHOW_UP = 25;
+    const SHOW_UP = 100;
+    let suppressUntil = 0;
     const handleScroll = () => {
+      const now = Date.now();
       const currentY = window.scrollY;
       const delta = currentY - lastScrollY.current;
       lastScrollY.current = currentY;
@@ -92,21 +94,30 @@ export const Header: React.FC<HeaderProps> = ({
         return;
       }
 
+      // Cooldown after a state flip so the layout-height change itself
+      // (which shifts scrollY by dozens of px) can't immediately reverse it.
+      if (now < suppressUntil) {
+        scrollAccum.current = 0;
+        return;
+      }
+
       // Collapse as soon as we scroll downward past a small threshold
       if (!collapsedRef.current && delta > 0) {
         collapsedRef.current = true;
         setCollapsed(true);
         scrollAccum.current = 0;
+        suppressUntil = now + 250;
         return;
       }
 
-      // Expand only after scrolling up by a slight amount (hysteresis)
+      // Expand only after scrolling up by a substantial amount (hysteresis)
       if (collapsedRef.current) {
         scrollAccum.current += delta;
         if (scrollAccum.current < -SHOW_UP) {
           collapsedRef.current = false;
           setCollapsed(false);
           scrollAccum.current = 0;
+          suppressUntil = now + 250;
         }
       }
     };
