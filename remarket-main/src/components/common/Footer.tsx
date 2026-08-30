@@ -97,18 +97,18 @@ export const Footer: React.FC = () => {
 
           <div>
             <h5 className="font-bold text-white mb-3 text-xs">
-              {language === 'ja' ? '制作・ポートフォリオ' : 'Creator & Portfolio'}
+              {language === 'ja' ? 'About Me' : 'About Me'}
             </h5>
             <div className="bg-white/5 p-3 rounded-xl border border-white/10 text-[11px] text-gray-300 space-y-1.5">
               <p className="font-semibold text-white">{language === 'ja' ? 'ポートフォリオ' : 'Portfolio'}</p>
               <p>
                 <a
-                  href="https://hoangvuvan.xyz"
+                  href="https://portfolio.hoangvuvan.xyz"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-emerald-400 hover:text-emerald-300 hover:underline break-all"
                 >
-                  hoangvuvan.xyz
+                  portfolio.hoangvuvan.xyz
                 </a>
               </p>
               <p className="font-semibold text-white mt-2">{language === 'ja' ? 'Webサイト制作のご相談' : 'Web Development Inquiry'}</p>
