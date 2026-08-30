@@ -343,6 +343,13 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => onNavigate('home')}
               className="text-left group cursor-pointer flex items-center gap-2.5"
             >
+              <img
+                src="/favicon.svg"
+                alt="Re:Market logo"
+                className="w-10 h-10 shrink-0"
+                width={40}
+                height={40}
+              />
               <div className="flex flex-col">
                 <span className="text-2xl font-black tracking-tighter text-[#1a1a1a] leading-none">
                   {t('brand.title')}
@@ -353,7 +360,6 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </button>
           </div>
-
           {/* Center Search Bar */}
           <div className="flex-1 max-w-xl hidden md:block">
             <div className="relative flex items-center">
