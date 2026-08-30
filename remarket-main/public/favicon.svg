@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bagGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="handleGrad" x1="20" y1="6" x2="44" y2="22" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  <!-- Shopping Bag Handle -->
+  <path d="M22 20V13C22 7.477 26.477 3 32 3C37.523 3 42 7.477 42 13V20" stroke="url(#handleGrad)" stroke-width="5" stroke-linecap="round" fill="none" />
+  <!-- Shopping Bag Body -->
+  <rect x="8" y="18" width="48" height="42" rx="10" fill="url(#bagGrad)" />
+  <!-- Letter R inside bag -->
+  <text x="32" y="48" fill="#FFFFFF" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="900" text-anchor="middle" letter-spacing="-1">R</text>
+  <!-- Accent dot -->
+  <circle cx="46" cy="25" r="2.5" fill="#6EE7B7" />
+</svg>

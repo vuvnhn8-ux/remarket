@@ -1,0 +1,6 @@
+{
+  "name": "Re:Market - 日本の中古品EC＆リユース管理システム",
+  "description": "「中古品に、もう一度価値を。」Consumer → Used-goods Company → Consumerのリユース業務フロー（買取・検品・在庫・出品・販売）とAIアシスタントを統合した中古品ECプラットフォーム",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
