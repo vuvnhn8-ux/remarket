@@ -73,16 +73,34 @@ export const Header: React.FC<HeaderProps> = ({
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const lastScrollY = React.useRef(0);
+  const scrollAccum = React.useRef(0);
+  const collapsedRef = React.useRef(false);
 
   useEffect(() => {
+    const THRESHOLD = 200;
+    const HIDE_GAP = 120;
+    const SHOW_GAP = 80;
     const handleScroll = () => {
       const currentY = window.scrollY;
-      if (currentY > lastScrollY.current && currentY > 120) {
-        setCollapsed(true);
-      } else if (currentY < lastScrollY.current) {
-        setCollapsed(false);
-      }
+      const delta = currentY - lastScrollY.current;
       lastScrollY.current = currentY;
+      scrollAccum.current += delta;
+
+      if (!collapsedRef.current && currentY > THRESHOLD && scrollAccum.current > HIDE_GAP) {
+        collapsedRef.current = true;
+        setCollapsed(true);
+        scrollAccum.current = 0;
+      } else if (collapsedRef.current && scrollAccum.current < -SHOW_GAP) {
+        collapsedRef.current = false;
+        setCollapsed(false);
+        scrollAccum.current = 0;
+      }
+
+      if (currentY <= 0 && collapsedRef.current) {
+        collapsedRef.current = false;
+        setCollapsed(false);
+        scrollAccum.current = 0;
+      }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
