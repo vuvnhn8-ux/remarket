@@ -20,7 +20,7 @@ import {
 } from '../types';
 import { hashPassword } from '../../lib/security/hash';
 
-const DEMO_CATEGORIES: ProductCategory[] = ['カメラ', 'パソコン', 'ゲーム'];
+const DEMO_CATEGORIES: ProductCategory[] = ['カメラ', 'パソコン', 'スマートフォン', 'ゲーム', 'オーディオ', '腕時計', '家電'];
 
 const SIM_CATEGORY_IMAGES: Partial<Record<ProductCategory, string[]>> = {
   カメラ: [
@@ -33,10 +33,30 @@ const SIM_CATEGORY_IMAGES: Partial<Record<ProductCategory, string[]>> = {
     'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=800&q=80',
   ],
+  スマートフォン: [
+    'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=800&q=80',
+  ],
   ゲーム: [
     'https://images.unsplash.com/photo-1486401899868-0e435ed85128?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?auto=format&fit=crop&w=800&q=80',
     'https://images.unsplash.com/photo-1592840496694-26d035b52b48?auto=format&fit=crop&w=800&q=80',
+  ],
+  オーディオ: [
+    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=800&q=80',
+  ],
+  腕時計: [
+    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1533139502658-0198f920d8e8?auto=format&fit=crop&w=800&q=80',
+  ],
+  家電: [
+    'https://images.unsplash.com/photo-1585338107529-13afc5f02586?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=800&q=80',
   ],
 };
 
@@ -51,12 +71,37 @@ const DEMO_ITEMS: {
   { brand: 'SIM Canon', model: 'EOS R6 (DEMO)', category: 'カメラ', price: 168000, cost: 118000, rank: 'A' },
   { brand: 'SIM Sony', model: 'α7 III (DEMO)', category: 'カメラ', price: 148000, cost: 103000, rank: 'B' },
   { brand: 'SIM Nikon', model: 'Z6 II (DEMO)', category: 'カメラ', price: 122000, cost: 84000, rank: 'B' },
+  { brand: 'SIM Fujifilm', model: 'X-T4 (DEMO)', category: 'カメラ', price: 116000, cost: 79000, rank: 'A' },
+  { brand: 'SIM Panasonic', model: 'LUMIX GH5 (DEMO)', category: 'カメラ', price: 98000, cost: 65000, rank: 'C' },
   { brand: 'SIM Apple', model: 'MacBook Air M2 (DEMO)', category: 'パソコン', price: 98000, cost: 66000, rank: 'A' },
   { brand: 'SIM Dell', model: 'XPS 15 (DEMO)', category: 'パソコン', price: 88000, cost: 59000, rank: 'C' },
   { brand: 'SIM Lenovo', model: 'ThinkPad X1 (DEMO)', category: 'パソコン', price: 72000, cost: 48000, rank: 'B' },
+  { brand: 'SIM Apple', model: 'MacBook Pro 14 M1 (DEMO)', category: 'パソコン', price: 132000, cost: 91000, rank: 'B' },
+  { brand: 'SIM Microsoft', model: 'Surface Laptop 5 (DEMO)', category: 'パソコン', price: 79000, cost: 52000, rank: 'A' },
+  { brand: 'SIM Apple', model: 'iPhone 15 Pro (DEMO)', category: 'スマートフォン', price: 96000, cost: 68000, rank: 'A' },
+  { brand: 'SIM Samsung', model: 'Galaxy S23 (DEMO)', category: 'スマートフォン', price: 68000, cost: 46000, rank: 'B' },
+  { brand: 'SIM Google', model: 'Pixel 8 (DEMO)', category: 'スマートフォン', price: 62000, cost: 41000, rank: 'B' },
+  { brand: 'SIM Sony', model: 'Xperia 1 V (DEMO)', category: 'スマートフォン', price: 84000, cost: 57000, rank: 'C' },
   { brand: 'SIM Nintendo', model: 'Switch OLED (DEMO)', category: 'ゲーム', price: 26000, cost: 18000, rank: 'A' },
   { brand: 'SIM Sony PS', model: 'PS5 (DEMO)', category: 'ゲーム', price: 44000, cost: 31000, rank: 'B' },
   { brand: 'SIM Steam', model: 'Deck 512GB (DEMO)', category: 'ゲーム', price: 39000, cost: 27000, rank: 'C' },
+  { brand: 'SIM Nintendo', model: 'Switch Lite (DEMO)', category: 'ゲーム', price: 16000, cost: 10500, rank: 'B' },
+  { brand: 'SIM Sony', model: 'WH-1000XM5 (DEMO)', category: 'オーディオ', price: 26000, cost: 17000, rank: 'A' },
+  { brand: 'SIM Bose', model: 'QuietComfort 45 (DEMO)', category: 'オーディオ', price: 22000, cost: 14500, rank: 'B' },
+  { brand: 'SIM SEIKO', model: 'Presage (DEMO)', category: '腕時計', price: 78000, cost: 52000, rank: 'B' },
+  { brand: 'SIM CASIO', model: 'G-SHOCK MT-G (DEMO)', category: '腕時計', price: 64000, cost: 43000, rank: 'A' },
+  { brand: 'SIM Dyson', model: 'V12 Detect Slim (DEMO)', category: '家電', price: 56000, cost: 37000, rank: 'B' },
+  { brand: 'SIM BALMUDA', model: 'The Toaster (DEMO)', category: '家電', price: 21000, cost: 13000, rank: 'A' },
+  { brand: 'SIM Panasonic', model: 'LUMIX 4K ビデオカメラ (DEMO)', category: 'カメラ', price: 88000, cost: 59000, rank: 'C' },
+  { brand: 'SIM Canon', model: 'PowerShot G7X (DEMO)', category: 'カメラ', price: 52000, cost: 34000, rank: 'B' },
+  { brand: 'SIM Apple', model: 'iPad Pro 11 M2 (DEMO)', category: 'パソコン', price: 88000, cost: 59000, rank: 'B' },
+  { brand: 'SIM Apple', model: 'iPhone 13 (DEMO)', category: 'スマートフォン', price: 52000, cost: 34000, rank: 'A' },
+  { brand: 'SIM Audio-Technica', model: 'ATH-M50x (DEMO)', category: 'オーディオ', price: 15000, cost: 9500, rank: 'B' },
+  { brand: 'SIM Sennheiser', model: 'HD 600 (DEMO)', category: 'オーディオ', price: 28000, cost: 18500, rank: 'A' },
+  { brand: 'SIM Grand Seiko', model: 'SBGA211 (DEMO)', category: '腕時計', price: 480000, cost: 340000, rank: 'C' },
+  { brand: 'SIM CITIZEN', model: 'Attesa (DEMO)', category: '腕時計', price: 96000, cost: 66000, rank: 'B' },
+  { brand: 'SIM iRobot', model: 'Roomba i7+ (DEMO)', category: '家電', price: 42000, cost: 28000, rank: 'B' },
+  { brand: 'SIM SHARP', model: '無水調理 ヘルシオ (DEMO)', category: '家電', price: 68000, cost: 47000, rank: 'C' },
 ];
 
 export function generateSimulationSeed(): SeedData {
@@ -69,6 +114,7 @@ export function generateSimulationSeed(): SeedData {
 
   DEMO_ITEMS.forEach((item, i) => {
     const idx = String(i + 1).padStart(4, '0');
+    const isSold = i % 4 === 0;
     const catImages = SIM_CATEGORY_IMAGES[item.category] || SIM_CATEGORY_IMAGES['カメラ'];
     const productImages = [catImages[i % catImages.length], catImages[(i + 1) % catImages.length]];
     const acq: AcquisitionRecord = {
@@ -138,8 +184,8 @@ export function generateSimulationSeed(): SeedData {
       price: item.price,
       originalRetailPrice: item.price * 2,
       conditionRank: item.rank,
-      stock: i % 4 === 0 ? 0 : 1,
-      isSold: i % 4 === 0,
+      stock: isSold ? 0 : 1,
+      isSold,
       images: productImages,
       featuredImage: productImages[0],
       cosmeticSummary: `【デモ】${item.rank}ランクシナリオ`,
@@ -165,18 +211,18 @@ export function generateSimulationSeed(): SeedData {
     inspections.push(insp);
 
     // Một vài order đã "bán" cho thấy funell
-    if (i === 0) {
+    if (isSold) {
       orders.push({
         id: `SIM-ORD-${idx}`,
-        customerName: 'デモ顧客 A',
-        customerEmail: 'a@example.com',
+        customerName: `デモ顧客 ${(i % 4) + 1}`,
+        customerEmail: `demo${(i % 4) + 1}@example.com`,
         customerPhone: '090',
         shippingPostalCode: '100-0001',
         shippingAddress: '東京都 千代田区 デモ 1-1',
         deliverySlot: '午前中',
         paymentMethod: 'クレジットカード',
         paymentStatus: '支払済',
-        orderStatus: '配達完了',
+        orderStatus: i % 8 === 0 ? '発送準備中' : '配達完了',
         items: [
           {
             productId: prod.id,
@@ -193,7 +239,7 @@ export function generateSimulationSeed(): SeedData {
         shippingFee: 0,
         totalAmount: prod.price + Math.round(prod.price * 0.1),
         orderedAt: today,
-        trackingNumber: 'DEMO-TRK-0001',
+        trackingNumber: `DEMO-TRK-${String(i + 1).padStart(4, '0')}`,
         isSimulation: true,
       });
     }
@@ -208,6 +254,33 @@ export function generateSimulationSeed(): SeedData {
       postalCode: '150-0001',
       address: '東京都渋谷区',
       favorites: [products[0].id, products[1].id],
+    },
+    {
+      id: 'CUST-0002',
+      name: '佐々木 デモ',
+      email: 'demo2@example.com',
+      phone: '080-0000-0000',
+      postalCode: '101-0002',
+      address: '東京都千代田区',
+      favorites: [products[4].id, products[9].id],
+    },
+    {
+      id: 'CUST-0003',
+      name: '高橋 デモ',
+      email: 'demo3@example.com',
+      phone: '070-0000-0000',
+      postalCode: '160-0003',
+      address: '東京都新宿区',
+      favorites: [products[12].id],
+    },
+    {
+      id: 'CUST-0004',
+      name: '伊藤 デモ',
+      email: 'demo4@example.com',
+      phone: '090-0000-0004',
+      postalCode: '150-0004',
+      address: '東京都渋谷区',
+      favorites: [products[17].id, products[20].id],
     },
   ];
 

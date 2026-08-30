@@ -17,7 +17,7 @@ export interface LanguageContextType {
 export const translations = {
   ja: {
     // Header & Navigation
-    'brand.title': 'Re:Market',
+    'brand.title': 'ReMarket',
     'brand.tagline': 'リマーケット・循環型リユースEC',
     'brand.heroTitle': 'いいモノに、もう一度新しい価値を。',
     'brand.slogan': '買う。売る。再利用する。つなげる。',
@@ -285,7 +285,7 @@ export const translations = {
   },
   en: {
     // Header & Navigation
-    'brand.title': 'Re:Market',
+    'brand.title': 'ReMarket',
     'brand.tagline': 'Circular Reuse E-Commerce Platform',
     'brand.heroTitle': 'Give Good Things Another Life.',
     'brand.slogan': 'Buy. Sell. Reuse. Repeat.',

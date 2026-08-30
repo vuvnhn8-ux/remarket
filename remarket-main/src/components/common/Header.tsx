@@ -351,7 +351,7 @@ export const Header: React.FC<HeaderProps> = ({
                 height={40}
               />
               <div className="flex flex-col">
-                <span className="text-2xl font-black tracking-tighter text-[#1a1a1a] leading-none">
+                <span className="text-2xl font-black tracking-tighter text-emerald-600 leading-none">
                   {t('brand.title')}
                 </span>
                 <span className="text-[10px] text-gray-500 font-medium tracking-widest leading-tight mt-0.5">
