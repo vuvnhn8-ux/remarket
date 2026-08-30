@@ -134,7 +134,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs">
       {/* Top Demo & Role & Language Control Bar */}
-      <div className={`bg-slate-900 text-slate-200 px-4 py-1.5 text-xs overflow-hidden transition-[max-height,opacity] duration-300 ${collapsed ? 'max-h-0 py-0 opacity-0' : 'max-h-20 opacity-100'}`}>
+      <div className={`bg-slate-900 text-slate-200 px-4 py-1.5 text-xs transition-[max-height,opacity] duration-300 ${collapsed ? 'hidden' : 'max-h-20 overflow-hidden opacity-100'}`}>
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           {/* Tagline & Business Concept */}
           <div className="flex items-center gap-3">
@@ -387,7 +387,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Main Navigation Bar */}
-      <div className={`max-w-7xl mx-auto px-4 sm:px-6 transition-all duration-300 ${collapsed ? 'pt-1 pb-1.5' : 'py-3.5'}`}>
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 transition-all duration-300 ${collapsed ? 'pt-2.5 pb-2.5' : 'py-3.5'}`}>
         <div className={`flex items-center justify-between transition-all duration-300 ${collapsed ? 'gap-2' : 'gap-6'}`}>
           {/* Brand Logo */}
           <div className="flex items-center gap-3 shrink-0">
@@ -432,7 +432,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                  className="h-7 px-2.5 bg-gray-200/70 hover:bg-gray-200 text-[11px] font-medium text-gray-700 rounded-full flex items-center gap-1 cursor-pointer transition"
+                  className={`bg-gray-200/70 hover:bg-gray-200 text-[11px] font-medium text-gray-700 rounded-full flex items-center gap-1 cursor-pointer transition ${collapsed ? 'h-6 px-2' : 'h-7 px-2.5'}`}
                 >
                   <span className="max-w-[80px] truncate">
                     {selectedCategory === 'all' ? t('nav.allCategories') : getCategoryName(selectedCategory)}
@@ -482,7 +482,7 @@ export const Header: React.FC<HeaderProps> = ({
               className={`inline-flex items-center bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white rounded-full text-xs font-bold shadow-xs transition cursor-pointer ${collapsed ? 'p-1.5' : 'gap-1.5 px-3.5 py-1.5'}`}
               title={t('nav.aiConsult')}
             >
-              <Sparkles className={`text-amber-300 animate-pulse ${collapsed ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} />
+              <Sparkles className={`text-amber-300 animate-pulse ${collapsed ? 'w-2.5 h-2.5' : 'w-3.5 h-3.5'}`} />
               <span className={`hidden sm:inline ${collapsed ? 'hidden' : ''}`}>{t('nav.aiConsult')}</span>
             </button>
 
@@ -493,7 +493,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex flex-col items-center p-1 text-gray-700 hover:text-black transition cursor-pointer relative"
               title={t('nav.favorites')}
             >
-              <Heart className={`text-gray-700 hover:text-black transition ${collapsed ? 'w-3.5 h-3.5' : 'w-5 h-5'}`} />
+              <Heart className={`text-gray-700 hover:text-black transition ${collapsed ? 'w-3 h-3' : 'w-5 h-5'}`} />
               {!collapsed && <span className="text-[9px] mt-0.5 text-gray-500 font-medium hidden sm:inline">{t('nav.favorites')}</span>}
               {favoritesCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
@@ -509,7 +509,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex flex-col items-center p-1 text-gray-700 hover:text-black transition cursor-pointer relative"
               title={t('nav.cart')}
             >
-              <ShoppingCart className={`text-gray-700 hover:text-black transition ${collapsed ? 'w-3.5 h-3.5' : 'w-5 h-5'}`} />
+              <ShoppingCart className={`text-gray-700 hover:text-black transition ${collapsed ? 'w-3 h-3' : 'w-5 h-5'}`} />
               {!collapsed && <span className="text-[9px] mt-0.5 text-gray-500 font-medium hidden sm:inline">{t('nav.cart')}</span>}
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full min-w-[16px] text-center">
@@ -611,7 +611,7 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         {/* Sub-Navigation Categories / Internal View Links */}
-        <div className={`mt-2.5 pt-2 border-t border-slate-100 hidden sm:flex items-center justify-between text-xs text-slate-600 overflow-hidden transition-[max-height,opacity,margin,padding] duration-300 ${collapsed ? 'max-h-0 mt-0 pt-0 opacity-0 border-transparent' : 'max-h-16 opacity-100'}`}>
+        <div className={`mt-2.5 pt-2 border-t border-slate-100 items-center justify-between text-xs text-slate-600 transition-[height,opacity,margin,padding] duration-300 ${collapsed ? 'hidden' : 'hidden sm:flex max-h-16 opacity-100'}`}>
           {/* Customer Category Navigation */}
           {currentRole === 'customer' && (
             <div className="flex items-center gap-4 overflow-x-auto whitespace-nowrap pb-1">
