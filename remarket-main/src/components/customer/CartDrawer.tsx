@@ -22,7 +22,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
   const tax = Math.round(subtotal * (10 / 110)); // 10% tax inclusive
-  const shippingFee = subtotal >= 5000 || items.length === 0 ? 0 : 770;
+  const shippingFee = subtotal >= 5000 || items.length === 0 ? 0 : 550;
   const total = subtotal + shippingFee;
 
   return (

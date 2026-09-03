@@ -536,9 +536,38 @@ export class DatabaseStore {
     return order;
   }
 
+  /**
+   * Máy trạng thái đơn hàng (AGENTS.md mục 14):
+   *  注文受付 → 支払確認 → 発送準備中 → 発送済み → 配達完了
+   * Chỉ cho phép chuyển tiến thuận hoặc huỷ (キャンセル) trước khi phát hàng.
+   * Không cho phép chuyển lùi / nhảy cóc tuỳ ý.
+   */
+  private static readonly ORDER_FLOW: OrderStatus[] = ['注文受付', '支払確認', '発送準備中', '発送済み', '配達完了'];
+
   public updateOrderStatus(orderId: string, status: OrderStatus, trackingNumber?: string): OrderRecord | null {
     const order = this.orders.find((o) => o.id === orderId);
     if (!order) return null;
+
+    const current = order.orderStatus;
+
+    // Huỷ chỉ cho phép từ các trạng thái chưa phát hàng.
+    if (status === 'キャンセル') {
+      if (current === '発送済み' || current === '配達完了') {
+        throw new Error('発送後の注文はキャンセルできません。');
+      }
+      order.orderStatus = 'キャンセル';
+      order.paymentStatus = '返金済';
+      return order;
+    }
+
+    // Trạng thái giữ nguyên không làm gì.
+    if (status === current) return order;
+
+    const curIdx = DatabaseStore.ORDER_FLOW.indexOf(current);
+    const nextIdx = DatabaseStore.ORDER_FLOW.indexOf(status);
+    if (curIdx < 0 || nextIdx < 0 || nextIdx !== curIdx + 1) {
+      throw new Error(`注文ステータスを「${current}」から「${status}」へ変更できません（不正な遷移）。`);
+    }
 
     order.orderStatus = status;
     const today = new Date().toISOString().slice(0, 10);
@@ -603,7 +632,11 @@ export class DatabaseStore {
 
   // ===================== BUSINESS KPIS ENGINE (経営・リユースKPI) =====================
   public getBusinessKPIs(): BusinessKPIs {
-    const todayStr = '2026-08-25'; // Simulated anchor date
+    // Anchor = ngày kinh doanh mới nhất có trong dữ liệu (đơn hàng gần nhất),
+    // phản ánh đúng số lượng thật thay vì hardcode một mốc tĩnh (AGENTS.md mục 9).
+    const orderedDates = this.orders.map((o) => o.orderedAt).filter(Boolean);
+    const todayStr = orderedDates.length > 0 ? orderedDates.sort().slice(-1)[0] : new Date().toISOString().slice(0, 10);
+    const DAY_MS = 24 * 60 * 60 * 1000;
     const soldOrders = this.orders.filter((o) => o.orderStatus !== 'キャンセル');
 
     const totalRevenue = soldOrders.reduce((sum, o) => sum + o.subtotal, 0);
@@ -633,7 +666,6 @@ export class DatabaseStore {
 
     // Average days to sell — computed từ dữ liệu thật (AGENTS.md mục 9, không hardcode):
     // trung bình số ngày giữa listedAt và soldAt của các inventory đã bán.
-    const DAY_MS = 24 * 60 * 60 * 1000;
     const soldWithDates = this.inventories.filter(
       (i) => i.status === '売却済み' && !!i.listedAt && !!i.soldAt
     );
@@ -689,8 +721,16 @@ export class DatabaseStore {
     });
 
     return {
-      salesToday: Math.round(totalRevenue * 0.08),
-      salesThisWeek: Math.round(totalRevenue * 0.38),
+      salesToday: this.orders
+        .filter((o) => o.orderStatus !== 'キャンセル' && o.orderedAt === todayStr)
+        .reduce((sum, o) => sum + o.subtotal, 0),
+      salesThisWeek: this.orders
+        .filter((o) => o.orderStatus !== 'キャンセル' && !!o.orderedAt)
+        .filter((o) => {
+          const days = (new Date(todayStr).getTime() - new Date(o.orderedAt).getTime()) / DAY_MS;
+          return days >= 0 && days <= 6;
+        })
+        .reduce((sum, o) => sum + o.subtotal, 0),
       salesThisMonth: totalRevenue,
       revenueThisMonth: totalRevenue,
       grossProfitThisMonth: totalGrossProfit,

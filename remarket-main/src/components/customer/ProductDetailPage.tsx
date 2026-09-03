@@ -44,8 +44,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
   const [addedToast, setAddedToast] = useState<boolean>(false);
 
-  const images = product.galleryImages && product.galleryImages.length > 0
-    ? product.galleryImages
+  const images = product.images && product.images.length > 0
+    ? product.images
     : [product.featuredImage];
 
   const rankInfo = getRankLabel(product.conditionRank);
@@ -129,7 +129,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                       : 'border-slate-200 hover:border-slate-400 opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <img src={img} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                  <img src={img} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -268,16 +268,14 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                 <UserCheck className="w-4 h-4 text-slate-700" />
                 <span>
                   {t('product.inspector')}: <strong className="text-slate-900">
-                    {product.inspectorNotes 
-                      ? (language === 'ja' ? '技術査定士 認証済' : 'Certified Technical Appraiser') 
-                      : (language === 'ja' ? '専門検品員' : 'Specialized Inspector')}
+                    {product.inspectorName || (language === 'ja' ? '専門検品員' : 'Specialized Inspector')}
                   </strong>
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-slate-700" />
                 <span>
-                  {t('product.inspectedDate')}: <strong className="text-slate-900">{product.createdAt.slice(0, 10)}</strong>
+                    {t('product.inspectedDate')}: <strong className="text-slate-900">{product.inspectionDate || product.createdAt.slice(0, 10)}</strong>
                 </span>
               </div>
               {product.serialNumber && (

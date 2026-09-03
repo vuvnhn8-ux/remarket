@@ -38,12 +38,15 @@ import { AdminAiInsights } from './components/admin/AdminAiInsights';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LoginModal } from './components/auth/LoginModal';
 import { VerificationPage } from './components/auth/VerificationPage';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <RootRouter />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <RootRouter />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

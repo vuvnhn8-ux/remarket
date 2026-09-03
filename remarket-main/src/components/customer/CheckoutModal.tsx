@@ -34,14 +34,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const { user } = useAuth();
 
-  // Form State (prefill từ tài khoản đã đăng nhập)
+  // Form State (prefill name/email từ tài khoản đã đăng nhập; shipping để trống để khách nhập)
   const [customerName, setCustomerName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState('090-1234-5678');
-  const [postalCode, setPostalCode] = useState('150-0001');
-  const [prefecture, setPrefecture] = useState('東京都');
-  const [cityAddress, setCityAddress] = useState('渋谷区神宮前 1-2-3 メゾン原宿 402');
-  const [deliverySlot, setDeliverySlot] = useState('午前中 (8:00-12:00)');
+  const [phone, setPhone] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [cityAddress, setCityAddress] = useState('');
+  const [deliverySlot, setDeliverySlot] = useState('指定なし');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('credit_card');
   const [cardNumber, setCardNumber] = useState('•••• •••• •••• 4242');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +49,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const subtotal = items.reduce((sum, item) => sum + item.price, 0);
   const tax = Math.round(subtotal * (10 / 110));
-  const shippingFee = subtotal >= 5000 ? 0 : 770;
+  const shippingFee = subtotal >= 5000 ? 0 : 550;
   const total = subtotal + shippingFee;
 
   const handleExecutePurchase = async (e: React.FormEvent) => {
@@ -76,7 +75,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         customerPhone: phone,
         shippingAddress: {
           postalCode,
-          prefecture,
+          prefecture: '',
           city: cityAddress,
           addressLine: '',
         },
@@ -221,6 +220,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <input
                     type="tel"
                     required
+                    placeholder="090-1234-5678"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
@@ -231,6 +231,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <input
                     type="text"
                     required
+                    placeholder="150-0001"
                     value={postalCode}
                     onChange={(e) => setPostalCode(e.target.value)}
                     className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
@@ -241,7 +242,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <input
                     type="text"
                     required
-                    value={`${prefecture} ${cityAddress}`}
+                    placeholder="東京都渋谷区神宮前 1-2-3"
+                    value={cityAddress}
                     onChange={(e) => setCityAddress(e.target.value)}
                     className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
                   />

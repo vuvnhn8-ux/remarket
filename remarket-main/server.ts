@@ -240,13 +240,29 @@ app.patch('/api/inventories/:id/price', requireRole('staff'), (req, res) => {
 });
 
 // Orders & Atomic Purchase (注文管理)
-app.get('/api/orders', (req, res) => {
-  res.json(getStore().getOrders());
+// Bảo mật: mọi người phải đăng nhập. Customer chỉ xem được đơn của mình
+// (theo email); staff/admin xem được toàn bộ (AGENTS.md mục 3, 17).
+app.get('/api/orders', requireAuth, (req, res) => {
+  const user = (req as any).user;
+  const isStaff = user.role === 'staff' || user.role === 'admin';
+  let orders = getStore().getOrders();
+  if (!isStaff) {
+    orders = orders.filter(
+      (o) => o.customerEmail && o.customerEmail.toLowerCase() === user.email.toLowerCase()
+    );
+  }
+  res.json(orders);
 });
 
-app.get('/api/orders/:id', (req, res) => {
+app.get('/api/orders/:id', requireAuth, (req, res) => {
+  const user = (req as any).user;
   const order = getStore().getOrderById(req.params.id);
   if (!order) return res.status(404).json({ error: '注文が見つかりません。' });
+  // Customer chỉ xem được đơn của chính mình; staff/admin xem được mọi đơn.
+  const isStaff = user.role === 'staff' || user.role === 'admin';
+  if (!isStaff && !(order.customerEmail && order.customerEmail.toLowerCase() === user.email.toLowerCase())) {
+    return res.status(403).json({ error: '他のお客様の注文にはアクセスできません。' });
+  }
   res.json(order);
 });
 
@@ -266,9 +282,13 @@ app.post('/api/orders', async (req, res) => {
 });
 
 app.patch('/api/orders/:id/status', requireRole('staff'), (req, res) => {
-  const updated = getStore().updateOrderStatus(req.params.id, req.body.orderStatus, req.body.trackingNumber);
-  if (!updated) return res.status(404).json({ error: '注文が見つかりません。' });
-  res.json(updated);
+  try {
+    const updated = getStore().updateOrderStatus(req.params.id, req.body.orderStatus, req.body.trackingNumber);
+    if (!updated) return res.status(404).json({ error: '注文が見つかりません。' });
+    res.json(updated);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // Business KPIs (chỉ Admin — AGENTS.md mục 9: query trực tiếp DB, không hardcode)
@@ -281,8 +301,8 @@ app.post('/api/reset-db', requireRole('admin'), (req, res) => {
   res.json(getStore().resetToDefault());
 });
 
-// Customers
-app.get('/api/customers', (req, res) => {
+// Customers (chỉ staff/admin — dữ liệu khách hàng nhạy cảm, AGENTS.md mục 17)
+app.get('/api/customers', requireRole('staff'), (req, res) => {
   res.json(getStore().getCustomers());
 });
 
@@ -292,8 +312,18 @@ app.post('/api/customers/favorites/toggle', requireAuth, (req, res) => {
     res.status(400).json({ error: 'customerId と productId が必要です。' });
     return;
   }
-  const favorites = getStore().toggleFavorite(customerId, productId);
-  res.json({ favorites });
+  // Bảo mật: không cho phép thao tác giỏ/favorite của người dùng khác.
+  const user = (req as any).user;
+  if (user.customerId && user.customerId !== customerId) {
+    res.status(403).json({ error: '他のお客様のデータにはアクセスできません。' });
+    return;
+  }
+  try {
+    const favorites = getStore().toggleFavorite(customerId, productId);
+    res.json({ favorites });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // ===================== AI FEATURES (Powered by Gemini) =====================

@@ -220,8 +220,8 @@ export const MyPage: React.FC<MyPageProps> = ({
                     {order.items.map((item, idx) => (
                       <div key={idx} className="py-3 first:pt-0 last:pb-0 flex items-center gap-4">
                         <div className="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden shrink-0">
-                          {item.featuredImage ? (
-                            <img src={item.featuredImage} alt="" className="w-full h-full object-cover" />
+                          {item.image ? (
+                            <img src={item.image} alt="" loading="lazy" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-slate-400">
                               <Package className="w-6 h-6" />
