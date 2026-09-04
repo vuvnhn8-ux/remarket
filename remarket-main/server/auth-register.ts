@@ -32,17 +32,20 @@ import crypto from 'node:crypto';
 import { createClient as createSupabaseClient, SupabaseClient } from '@supabase/supabase-js';
 import { getStore } from './store';
 import { sha256Hex, hashPassword } from '../lib/security/hash';
-import { DatabaseStore } from '../src/data/dbStore';
 import { PublicUser } from '../src/types';
 
 // ---------------------------------------------------------------------------
 // Env
 // ---------------------------------------------------------------------------
 function supabaseUrl(): string {
-  return process.env.VITE_SUPABASE_URL || '';
+  // Hỗ trợ cả định dạng cũ (VITE_*) và mới (VITE_PUBLIC_*) của Supabase key.
+  return process.env.VITE_SUPABASE_URL || process.env.VITE_PUBLIC_SUPABASE_URL || '';
 }
 function supabaseServiceRoleKey(): string {
   return process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+}
+function supabaseAnonKey(): string {
+  return process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_PUBLIC_SUPABASE_ANON_KEY || '';
 }
 function supabaseFunctionUrl(): string {
   return process.env.SUPABASE_FUNCTION_URL || '';
@@ -194,8 +197,8 @@ export class SupabaseRegisterProvider implements RegisterProvider {
     if (profileErr) throw new Error(profileErr.message || 'プロフィール作成に失敗しました。');
 
     // Ghi UserAccount local để login/RBAC (demo-grade như đã nêu ở header).
-    const store = getStore() as DatabaseStore;
-    const { userAccount } = store.registerCustomerAccount({
+    const store = getStore();
+    const { userAccount } = await store.registerCustomerAccount({
       email: input.email,
       passwordHash: hashPassword(input.password),
       name: input.name,
@@ -253,8 +256,8 @@ export class RegisterService {
    */
   async registerUser(input: { email: string; password: string; name: string }) {
     const email = input.email.toLowerCase().trim();
-    const store = getStore() as DatabaseStore;
-    if (store.getUserByEmail(email)) {
+    const store = getStore();
+    if (await store.getUserByEmail(email)) {
       return { ok: false, error: 'このメールアドレスは既に登録されています。' };
     }
     if (!isSupabaseRegisterEnabled()) {
@@ -365,13 +368,13 @@ export class RegisterService {
 
     await this.provider.confirmEmail(pending.email);
 
-    const store = getStore() as DatabaseStore;
-    const userAccount = store.getUserByEmail(pending.email);
+    const store = getStore();
+    const userAccount = await store.getUserByEmail(pending.email);
     if (!userAccount) {
       return { ok: false, error: 'アカウント情報が見つかりません。', verified: false };
     }
 
-    return { ok: true, verified: true, user: store.toPublicUser(userAccount), email: maskEmail(pending.email) };
+    return { ok: true, verified: true, user: await store.toPublicUser(userAccount), email: maskEmail(pending.email) };
   }
 }
 

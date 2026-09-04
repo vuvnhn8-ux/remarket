@@ -23,17 +23,22 @@ const PORT = 3000;
 app.use(express.json());
 
 // ===================== AUTH & RBAC (AGENTS.md mục 3) =====================
-app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) {
-    return res.status(400).json({ error: 'メールアドレスとパスワードを入力してください。' });
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return res.status(400).json({ error: 'メールアドレスとパスワードを入力してください。' });
+    }
+    const result = await login(String(email), String(password));
+    if (!result) {
+      return res.status(401).json({ error: 'メールアドレスまたはパスワードが正しくありません。' });
+    }
+    setSessionCookie(res, result.token);
+    res.json({ user: result.user });
+  } catch (err: any) {
+    console.error('[login] error:', err?.message || err);
+    res.status(500).json({ error: 'ログイン処理中にエラーが発生しました。' });
   }
-  const result = login(String(email), String(password));
-  if (!result) {
-    return res.status(401).json({ error: 'メールアドレスまたはパスワードが正しくありません。' });
-  }
-  setSessionCookie(res, result.token);
-  res.json({ user: result.user });
 });
 
 app.post('/api/auth/logout', (req, res) => {
@@ -139,10 +144,10 @@ app.get('/api/health', (req, res) => {
 });
 
 // Products
-app.get('/api/products', (req, res) => {
+app.get('/api/products', async (req, res) => {
   try {
     const { category, brand, conditionRank, minPrice, maxPrice, q, inStockOnly, sort, limit } = req.query;
-    const result = getStore().getProducts({
+    const result = await getStore().getProducts({
       category: category as string,
       brand: brand as string,
       conditionRank: conditionRank as string,
@@ -159,54 +164,78 @@ app.get('/api/products', (req, res) => {
   }
 });
 
-app.get('/api/products/:id', (req, res) => {
-  const product = getStore().getProductById(req.params.id);
-  if (!product) {
-    return res.status(404).json({ error: '商品が見つかりません。' });
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const product = await getStore().getProductById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ error: '商品が見つかりません。' });
+    }
+    res.json(product);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
-  res.json(product);
 });
 
 // Acquisitions (買取管理)
-app.get('/api/acquisitions', (req, res) => {
-  res.json(getStore().getAcquisitions());
-});
-
-app.get('/api/acquisitions/:id', (req, res) => {
-  const acq = getStore().getAcquisitionById(req.params.id);
-  if (!acq) return res.status(404).json({ error: '買取レコードが見つかりません。' });
-  res.json(acq);
-});
-
-app.post('/api/acquisitions', requireRole('staff'), (req, res) => {
+app.get('/api/acquisitions', async (req, res) => {
   try {
-    const created = getStore().createAcquisition(req.body);
+    res.json(await getStore().getAcquisitions());
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/acquisitions/:id', async (req, res) => {
+  try {
+    const acq = await getStore().getAcquisitionById(req.params.id);
+    if (!acq) return res.status(404).json({ error: '買取レコードが見つかりません。' });
+    res.json(acq);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/acquisitions', requireRole('staff'), async (req, res) => {
+  try {
+    const created = await getStore().createAcquisition(req.body);
     res.status(201).json(created);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
 });
 
-app.patch('/api/acquisitions/:id/status', requireRole('staff'), (req, res) => {
-  const updated = getStore().updateAcquisitionStatus(req.params.id, req.body.status);
-  if (!updated) return res.status(404).json({ error: '買取レコードが見つかりません。' });
-  res.json(updated);
+app.patch('/api/acquisitions/:id/status', requireRole('staff'), async (req, res) => {
+  try {
+    const updated = await getStore().updateAcquisitionStatus(req.params.id, req.body.status);
+    if (!updated) return res.status(404).json({ error: '買取レコードが見つかりません。' });
+    res.json(updated);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // Inspections (商品検品)
-app.get('/api/inspections', (req, res) => {
-  res.json(getStore().getInspections());
-});
-
-app.get('/api/inspections/:id', (req, res) => {
-  const insp = getStore().getInspectionById(req.params.id);
-  if (!insp) return res.status(404).json({ error: '検品レコードが見つかりません。' });
-  res.json(insp);
-});
-
-app.post('/api/inspections', requireRole('staff'), (req, res) => {
+app.get('/api/inspections', async (req, res) => {
   try {
-    const created = getStore().createInspection(req.body);
+    res.json(await getStore().getInspections());
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/inspections/:id', async (req, res) => {
+  try {
+    const insp = await getStore().getInspectionById(req.params.id);
+    if (!insp) return res.status(404).json({ error: '検品レコードが見つかりません。' });
+    res.json(insp);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/inspections', requireRole('staff'), async (req, res) => {
+  try {
+    const created = await getStore().createInspection(req.body);
     res.status(201).json(created);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -214,14 +243,18 @@ app.post('/api/inspections', requireRole('staff'), (req, res) => {
 });
 
 // Inventory (在庫・価格管理)
-app.get('/api/inventories', (req, res) => {
-  res.json(getStore().getInventories());
+app.get('/api/inventories', async (req, res) => {
+  try {
+    res.json(await getStore().getInventories());
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post('/api/inventories/register', requireRole('staff'), (req, res) => {
+app.post('/api/inventories/register', requireRole('staff'), async (req, res) => {
   try {
     const { acquisitionId, inspectionId, sellingPrice, warehouseLocation } = req.body;
-    const result = getStore().registerInventoryFromInspection({
+    const result = await getStore().registerInventoryFromInspection({
       acquisitionId,
       inspectionId,
       sellingPrice: Number(sellingPrice),
@@ -233,37 +266,49 @@ app.post('/api/inventories/register', requireRole('staff'), (req, res) => {
   }
 });
 
-app.patch('/api/inventories/:id/price', requireRole('staff'), (req, res) => {
-  const updated = getStore().updateInventoryPrice(req.params.id, Number(req.body.sellingPrice));
-  if (!updated) return res.status(404).json({ error: '在庫が見つかりません。' });
-  res.json(updated);
+app.patch('/api/inventories/:id/price', requireRole('staff'), async (req, res) => {
+  try {
+    const updated = await getStore().updateInventoryPrice(req.params.id, Number(req.body.sellingPrice));
+    if (!updated) return res.status(404).json({ error: '在庫が見つかりません。' });
+    res.json(updated);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // Orders & Atomic Purchase (注文管理)
 // Bảo mật: mọi người phải đăng nhập. Customer chỉ xem được đơn của mình
 // (theo email); staff/admin xem được toàn bộ (AGENTS.md mục 3, 17).
-app.get('/api/orders', requireAuth, (req, res) => {
-  const user = (req as any).user;
-  const isStaff = user.role === 'staff' || user.role === 'admin';
-  let orders = getStore().getOrders();
-  if (!isStaff) {
-    orders = orders.filter(
-      (o) => o.customerEmail && o.customerEmail.toLowerCase() === user.email.toLowerCase()
-    );
+app.get('/api/orders', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const isStaff = user.role === 'staff' || user.role === 'admin';
+    let orders = await getStore().getOrders();
+    if (!isStaff) {
+      orders = orders.filter(
+        (o) => o.customerEmail && o.customerEmail.toLowerCase() === user.email.toLowerCase()
+      );
+    }
+    res.json(orders);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
-  res.json(orders);
 });
 
-app.get('/api/orders/:id', requireAuth, (req, res) => {
-  const user = (req as any).user;
-  const order = getStore().getOrderById(req.params.id);
-  if (!order) return res.status(404).json({ error: '注文が見つかりません。' });
-  // Customer chỉ xem được đơn của chính mình; staff/admin xem được mọi đơn.
-  const isStaff = user.role === 'staff' || user.role === 'admin';
-  if (!isStaff && !(order.customerEmail && order.customerEmail.toLowerCase() === user.email.toLowerCase())) {
-    return res.status(403).json({ error: '他のお客様の注文にはアクセスできません。' });
+app.get('/api/orders/:id', requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const order = await getStore().getOrderById(req.params.id);
+    if (!order) return res.status(404).json({ error: '注文が見つかりません。' });
+    // Customer chỉ xem được đơn của chính mình; staff/admin xem được mọi đơn.
+    const isStaff = user.role === 'staff' || user.role === 'admin';
+    if (!isStaff && !(order.customerEmail && order.customerEmail.toLowerCase() === user.email.toLowerCase())) {
+      return res.status(403).json({ error: '他のお客様の注文にはアクセスできません。' });
+    }
+    res.json(order);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
-  res.json(order);
 });
 
 app.post('/api/orders', async (req, res) => {
@@ -281,9 +326,9 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-app.patch('/api/orders/:id/status', requireRole('staff'), (req, res) => {
+app.patch('/api/orders/:id/status', requireRole('staff'), async (req, res) => {
   try {
-    const updated = getStore().updateOrderStatus(req.params.id, req.body.orderStatus, req.body.trackingNumber);
+    const updated = await getStore().updateOrderStatus(req.params.id, req.body.orderStatus, req.body.trackingNumber);
     if (!updated) return res.status(404).json({ error: '注文が見つかりません。' });
     res.json(updated);
   } catch (err: any) {
@@ -292,21 +337,33 @@ app.patch('/api/orders/:id/status', requireRole('staff'), (req, res) => {
 });
 
 // Business KPIs (chỉ Admin — AGENTS.md mục 9: query trực tiếp DB, không hardcode)
-app.get('/api/kpis', requireRole('admin'), (req, res) => {
-  res.json(getStore().getBusinessKPIs());
+app.get('/api/kpis', requireRole('admin'), async (req, res) => {
+  try {
+    res.json(await getStore().getBusinessKPIs());
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Reset Database (chỉ Admin)
-app.post('/api/reset-db', requireRole('admin'), (req, res) => {
-  res.json(getStore().resetToDefault());
+app.post('/api/reset-db', requireRole('admin'), async (req, res) => {
+  try {
+    res.json(await getStore().resetToDefault());
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Customers (chỉ staff/admin — dữ liệu khách hàng nhạy cảm, AGENTS.md mục 17)
-app.get('/api/customers', requireRole('staff'), (req, res) => {
-  res.json(getStore().getCustomers());
+app.get('/api/customers', requireRole('staff'), async (req, res) => {
+  try {
+    res.json(await getStore().getCustomers());
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post('/api/customers/favorites/toggle', requireAuth, (req, res) => {
+app.post('/api/customers/favorites/toggle', requireAuth, async (req, res) => {
   const { customerId, productId } = req.body;
   if (!customerId || !productId) {
     res.status(400).json({ error: 'customerId と productId が必要です。' });
@@ -319,7 +376,7 @@ app.post('/api/customers/favorites/toggle', requireAuth, (req, res) => {
     return;
   }
   try {
-    const favorites = getStore().toggleFavorite(customerId, productId);
+    const favorites = await getStore().toggleFavorite(customerId, productId);
     res.json({ favorites });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
@@ -329,9 +386,13 @@ app.post('/api/customers/favorites/toggle', requireAuth, (req, res) => {
 // ===================== AI FEATURES (Powered by Gemini) =====================
 
 // AI Request Audit log (AGENTS.md mục 10) — xem toàn bộ request/response AI đã log
-app.get('/api/ai/requests', (req, res) => {
-  const limit = req.query.limit ? Number(req.query.limit) : 50;
-  res.json(getStore().getAIRequests(limit));
+app.get('/api/ai/requests', async (req, res) => {
+  try {
+    const limit = req.query.limit ? Number(req.query.limit) : 50;
+    res.json(await getStore().getAIRequests(limit));
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /**
@@ -389,7 +450,7 @@ app.post('/api/ai/generate-listing', requireRole('staff'), async (req, res) => {
       });
 
       const parsed = JSON.parse(response.text || '{}');
-      getStore().logAIRequest('listing', 'gemini-3.7-flash', { brand, model, category, rank, defects, accessories, missingAccessories, inspectorNotes }, parsed);
+      await getStore().logAIRequest('listing', 'gemini-3.7-flash', { brand, model, category, rank, defects, accessories, missingAccessories, inspectorNotes }, parsed);
       return res.json(parsed);
     }
 
@@ -407,7 +468,7 @@ app.post('/api/ai/generate-listing', requireRole('staff'), async (req, res) => {
       functionalNote: fallbackFunctional,
       keywords: fallbackKeywords,
     };
-    getStore().logAIRequest('listing', 'fallback-rule-based', { brand, model, category, rank }, fallback);
+    await getStore().logAIRequest('listing', 'fallback-rule-based', { brand, model, category, rank }, fallback);
 
     return res.json(fallback);
   } catch (err: any) {
@@ -423,7 +484,7 @@ app.post('/api/ai/generate-listing', requireRole('staff'), async (req, res) => {
 app.post('/api/ai/shopping-assistant', async (req, res) => {
   try {
     const { userMessage, history } = req.body;
-    const { items: liveProducts } = getStore().getProducts({ inStockOnly: true, limit: 30 });
+    const { items: liveProducts } = await getStore().getProducts({ inStockOnly: true, limit: 30 });
 
     // Provide real catalog context to Gemini
     const productCatalog = liveProducts.map((p) => ({
@@ -478,7 +539,7 @@ ${JSON.stringify(productCatalog, null, 2)}
 
       const parsed = JSON.parse(response.text || '{}');
       const recommendedProducts = liveProducts.filter((p) => parsed.recommendedProductIds?.includes(p.id));
-      getStore().logAIRequest('shopping', 'gemini-3.7-flash', { userMessage }, { reply: parsed.replyText, recommendedProductIds: parsed.recommendedProductIds });
+      await getStore().logAIRequest('shopping', 'gemini-3.7-flash', { userMessage }, { reply: parsed.replyText, recommendedProductIds: parsed.recommendedProductIds });
 
       return res.json({
         reply: parsed.replyText,
@@ -499,7 +560,7 @@ ${JSON.stringify(productCatalog, null, 2)}
 
     if (matches.length === 0) matches = liveProducts.slice(0, 3);
     const top3 = matches.slice(0, 3);
-    getStore().logAIRequest('shopping', 'fallback-rule-based', { userMessage }, { replyText: 'fallback', recommendedProductIds: top3.map((p) => p.id) });
+    await getStore().logAIRequest('shopping', 'fallback-rule-based', { userMessage }, { replyText: 'fallback', recommendedProductIds: top3.map((p) => p.id) });
 
     return res.json({
       reply: `お問い合わせありがとうございます！ご要望の条件にぴったりの厳選中古商品をご案内いたします。当店のリユース品はすべて専門スタッフによる動作検証およびクリーニングを行っており、安心保証が付属しております。`,
@@ -518,9 +579,9 @@ ${JSON.stringify(productCatalog, null, 2)}
 app.post('/api/ai/sales-insights', requireRole('admin'), async (req, res) => {
   try {
     const { question } = req.body;
-    const kpis = getStore().getBusinessKPIs();
-    const inventories = getStore().getInventories();
-    const products = getStore().getProducts().items;
+    const kpis = await getStore().getBusinessKPIs();
+    const inventories = await getStore().getInventories();
+    const products = (await getStore().getProducts()).items;
 
     const factualContext = {
       monthlyRevenue: `¥${kpis.revenueThisMonth.toLocaleString()}`,
@@ -572,7 +633,7 @@ ${JSON.stringify(factualContext, null, 2)}
       });
 
       const parsed = JSON.parse(response.text || '{}');
-      getStore().logAIRequest('sales_insights', 'gemini-3.7-flash', { question }, parsed);
+      await getStore().logAIRequest('sales_insights', 'gemini-3.7-flash', { question }, parsed);
       return res.json(parsed);
     }
 
@@ -590,7 +651,7 @@ ${JSON.stringify(factualContext, null, 2)}
         'Sランク・Aランク美品の特集ページ開設による客単価アップ',
       ],
     };
-    getStore().logAIRequest('sales_insights', 'fallback-rule-based', { question }, fallbackInsights);
+    await getStore().logAIRequest('sales_insights', 'fallback-rule-based', { question }, fallbackInsights);
 
     return res.json(fallbackInsights);
   } catch (err: any) {

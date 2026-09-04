@@ -16,14 +16,16 @@ import { OrderRecord } from '../../src/types';
 export type PaymentResult = { success: true } | { success: false; reason: string };
 
 /**
- * Interface tối thiểu mà PaymentService cần từ store (dbStore thật hoặc simStore).
- * Giúp PaymentService không gắn cứng với một lớp store cụ thể.
+ * Interface tối thiểu mà PaymentService cần từ store (dbStore/simStore sync,
+ * hoặc SupabaseStore/ServerStore async). Giúp PaymentService không gắn cứng với
+ * một lớp store cụ thể. Các phương thức cho phép cả trả synchronous lẫn async —
+ * `createAndConfirmOrder` dùng `await` nên xử lý được cả hai (AGENTS.md 14.2).
  */
 export interface PaymentStore {
-  createOrder(data: Record<string, unknown>): OrderRecord;
-  confirmOrderPayment(orderId: string): OrderRecord | null;
-  failOrderPayment(orderId: string): OrderRecord | null;
-  getOrderById(orderId: string): OrderRecord | undefined;
+  createOrder(data: Record<string, unknown>): OrderRecord | Promise<OrderRecord>;
+  confirmOrderPayment(orderId: string): OrderRecord | null | Promise<OrderRecord | null>;
+  failOrderPayment(orderId: string): OrderRecord | null | Promise<OrderRecord | null>;
+  getOrderById(orderId: string): OrderRecord | undefined | Promise<OrderRecord | undefined>;
 }
 
 export interface PaymentAdapter {
@@ -71,15 +73,15 @@ export class PaymentService {
    * thanh toán qua adapter. Business logic không biết adapter nào được chạy.
    */
   async createAndConfirmOrder(data: Record<string, unknown>): Promise<{ order: OrderRecord; result: PaymentResult }> {
-    const order = this.store.createOrder(data);
+    const order = await this.store.createOrder(data);
     const result = await this.adapter.confirmPayment(order);
 
     if (result.success) {
-      this.store.confirmOrderPayment(order.id);
+      await this.store.confirmOrderPayment(order.id);
     } else {
-      this.store.failOrderPayment(order.id);
+      await this.store.failOrderPayment(order.id);
     }
 
-    return { order: this.store.getOrderById(order.id)!, result };
+    return { order: (await this.store.getOrderById(order.id))!, result };
   }
 }

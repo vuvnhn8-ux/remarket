@@ -13,22 +13,33 @@ import { getStore } from './store';
 import { isEmailPending } from './auth-register';
 import { PublicUser, UserRole } from '../src/types';
 import { verifyPassword } from '../lib/security/hash';
+import { loginWithSupabase } from './supabase-auth';
 
 // ---------- In-memory session store ----------
 const sessions = new Map<string, { user: PublicUser; createdAt: string; maxAgeMs: number }>();
 const COOKIE_NAME = 'rm_session';
 const SESSION_MAX_AGE_MS = 8 * 60 * 60 * 1000; // 8h
 
-export function login(email: string, password: string): { token: string; user: PublicUser } | null {
+/**
+ * Đăng nhập. Thử in-memory trước (demo users + RBAC cục bộ); nếu không có
+ * user đó trong in-memory, thử xác thực qua Supabase Auth (user đăng ký qua
+ * Supabase). Trả về { token, user } hoặc null. Async vì có nhánh Supabase.
+ */
+export async function login(email: string, password: string): Promise<{ token: string; user: PublicUser } | null> {
   const store = getStore();
-  const user = store.getUserByEmail(email);
-  if (!user) return null;
-  if (!verifyPassword(password, user.passwordHash)) return null;
-  // Email vừa đăng ký nhưng chưa xác thực qua magic link -> chặn đăng nhập
-  // (AGENTS.md mục 8, quy tắc "không chuyển thẳng vào trang chính sau đăng ký").
-  if (isEmailPending(email)) return null;
+  const user = await store.getUserByEmail(email);
 
-  const pub = store.toPublicUser(user);
+  if (user) {
+    if (!verifyPassword(password, user.passwordHash)) return null;
+    // Email vừa đăng ký nhưng chưa xác thực qua magic link -> chặn đăng nhập.
+    if (isEmailPending(email)) return null;
+    const pub = await store.toPublicUser(user);
+    return issueSession(pub);
+  }
+
+  // User không có trong in-memory -> thử Supabase Auth (đăng ký qua Supabase).
+  const pub = await loginWithSupabase(email, password);
+  if (!pub) return null;
   return issueSession(pub);
 }
 
