@@ -7,6 +7,9 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { PublicUser, UserRole } from '../types';
 import { api } from '../services/api';
+import { supabase } from '../lib/supabase-client';
+import { publicUserFromSession } from '../lib/supabase-auth';
+import { isSimulationMode } from '../../lib/config/app-mode';
 
 interface AuthContextType {
   user: PublicUser | null;
@@ -36,6 +39,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
+    // Live mode: theo dõi thay đổi session Supabase (đăng nhập / xác nhận email /
+    // đăng xuất) để cập nhật UI tức thì. Simulation dùng session local riêng.
+    if (!isSimulationMode()) {
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (cancelled) return;
+        if (session) {
+          publicUserFromSession(session)
+            .then(setUser)
+            .catch(() => setUser(null));
+        } else {
+          setUser(null);
+        }
+      });
+      const sub = data.subscription;
+      return () => {
+        cancelled = true;
+        sub.unsubscribe();
+      };
+    }
+
     return () => {
       cancelled = true;
     };

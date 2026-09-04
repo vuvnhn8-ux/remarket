@@ -21,6 +21,8 @@ import { simulationEngine } from './simulationEngine';
 import { isSimulationMode as getIsSimulationMode } from '../../lib/config/app-mode';
 import { PaymentService, SimulationPaymentAdapter } from '../../lib/payment/index';
 import { verifyPassword, hashPassword } from '../../lib/security/hash';
+import { supabase, isSupabaseClientConfigured } from '../lib/supabase-client';
+import { publicUserFromSession } from '../lib/supabase-auth';
 
 // Simulation mode: trạng thái login được giữ trong bộ nhớ + localStorage để
 // không phụ thuộc server. Live mode: gọi /api/auth/* với cookie httpOnly.
@@ -52,38 +54,6 @@ function checkIsSimulation(): boolean {
 
 // Simulated slight network latency for realistic feel in Simulation Mode
 const simulateDelay = (ms = 120) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
- * Parse JSON response an toàn — KHÔNG bao giờ throw lỗi "Unexpected token" khi
- * body không phải JSON (VD: static host không có backend trả trang 404 HTML).
- * Trả về { ok, status, data } để caller đưa ra thông báo lỗi rõ ràng.
- */
-async function parseJson<T = any>(res: Response): Promise<{ ok: boolean; status: number; data: T }> {
-  let data: any = {};
-  const text = await res.text();
-  if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = null;
-    }
-  }
-  return { ok: res.ok, status: res.status, data };
-}
-
-/** Map HTTP status → thông báo tiếng Nhật rõ ràng, tránh hiện lỗi JSON thô. */
-function authErrorMessage(status: number): string {
-  switch (status) {
-    case 404:
-      return 'サーバーが見つかりません。この環境（デモ/静的サイト）ではご利用いただけません。';
-    case 502:
-      return 'メール送信サーバーに接続できませんでした。時間をおいてお試しください。';
-    case 429:
-      return '操作が多すぎます。時間をおいてお試しください。';
-    default:
-      return '通信エラーが発生しました。時間をおいてお試しください。';
-  }
-}
 
 export const api = {
   // ================= PRODUCTS =================
@@ -574,14 +544,15 @@ export const api = {
       setSimUser(pub);
       return pub;
     }
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const { ok, status, data } = await parseJson<{ error?: string; user?: PublicUser }>(res);
-    if (!ok) throw new Error(data?.error || authErrorMessage(status));
-    return data.user;
+    // Live mode: xác thực trực tiếp qua Supabase Auth (client-direct).
+    if (!isSupabaseClientConfigured()) {
+      throw new Error('Supabaseが設定されていません。');
+    }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error || !data.session) {
+      throw new Error(error?.message || 'メールアドレスまたはパスワードが正しくありません。');
+    }
+    return publicUserFromSession(data.session);
   },
 
   async logout(): Promise<void> {
@@ -590,7 +561,7 @@ export const api = {
       setSimUser(null);
       return;
     }
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await supabase.auth.signOut();
   },
 
   async getMe(): Promise<PublicUser | null> {
@@ -598,16 +569,16 @@ export const api = {
       await simulateDelay(40);
       return getSimUser();
     }
-    const res = await fetch('/api/auth/me');
-    if (!res.ok) return null;
-    const { data } = await parseJson<{ user?: PublicUser | null }>(res);
-    return data?.user || null;
+    if (!isSupabaseClientConfigured()) return null;
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return null;
+    return publicUserFromSession(data.session);
   },
 
   // ================= REGISTER + EMAIL MAGIC LINK (AGENTS.md mục 8) =================
-  // Luôn gọi server (/api/auth/*) vì trạng thái đăng ký + verify token nằm
-  // server-side (Supabase + Edge Function → Resend), không phụ thuộc chế độ simulation.
-  // Bắt buộc gửi EMAIL THẬT — không có fallback OTP/link hiển thị cho user.
+  // Đăng ký dùng supabase.auth.signUp — Supabase tự gửi email xác nhận (confirm
+  // email mặc định). Không cần server Express; profile được trigger tạo tự động
+  // (migration 0003).
   async register(input: {
     email: string;
     password: string;
@@ -620,17 +591,8 @@ export const api = {
     expiresInSeconds?: number;
     devVerifyLink?: string;
   }> {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-    const { ok, status, data } = await parseJson(res);
-    if (!ok) return { ok: false, error: data?.error || authErrorMessage(status) };
-    // Simulation mode: client dùng bản simStore riêng (khác server). Ghi thêm vào
-    // simStore client để luồng đăng nhập simulation tìm được tài khoản vừa tạo sau
-    // khi xác thực xong. Trạng thái "chưa verify" do server gate (login bị chặn).
     if (checkIsSimulation()) {
+      await simulateDelay(250);
       try {
         simStore.registerCustomerAccount({
           email: input.email,
@@ -640,22 +602,50 @@ export const api = {
       } catch {
         // đã tồn tại -> bỏ qua
       }
+      return { ok: true, email: input.email, provider: 'simulation' };
     }
-    return { ok: true, ...data };
+    if (!isSupabaseClientConfigured()) {
+      return { ok: false, error: 'Supabaseが設定されていません。' };
+    }
+    const { data, error } = await supabase.auth.signUp({
+      email: input.email,
+      password: input.password,
+      options: { data: { name: input.name } },
+    });
+    if (error) {
+      // Supabase trả thông báo chuẩn (VD: email đã tồn tại).
+      return { ok: false, error: error.message };
+    }
+    // Email confirm MẶC ĐỊNH của Supabase là BẬT -> chưa có session, user phải xác
+    // nhận qua email. Nếu admin tắt confirm (dev), session có ngay -> đăng nhập luôn.
+    if (data.session) {
+      const user = await publicUserFromSession(data.session);
+      setSimUser(user); // giữ local để AuthContext nhận biết tức thì
+      return { ok: true, email: data.user?.email, provider: 'supabase' };
+    }
+    return { ok: true, email: data.user?.email, provider: 'supabase' };
   },
 
   async verifyLink(token: string): Promise<{ ok: boolean; error?: string; user?: PublicUser }> {
-    const res = await fetch('/api/auth/verify-link', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    });
-    const { ok, status, data } = await parseJson<{ error?: string; user?: PublicUser }>(res);
-    if (!ok) return { ok: false, error: data?.error || authErrorMessage(status) };
-    // Magic link 1-click -> tự đăng nhập. Live: server đã set cookie httpOnly.
-    // Simulation: ghi session local để AuthContext nhận biết.
-    if (checkIsSimulation() && data.user) setSimUser(data.user);
-    return { ok: true, user: data.user };
+    if (checkIsSimulation()) {
+      // Simulation: coi như đã xác thực → đăng nhập qua simStore bằng email trong token (không dùng).
+      // Thực tế simulation không dùng /verify; trả null để tránh báo lỗi sai.
+      return { ok: false, error: 'この環境では認証リンクを使用できません。' };
+    }
+    if (!isSupabaseClientConfigured()) {
+      return { ok: false, error: 'Supabaseが設定されていません。' };
+    }
+    // Với email confirm mặc định của Supabase, sau khi user bấm link xác nhận,
+    // Supabase redirect về SITE_URL và session đã sẵn sàng qua detectSessionInUrl.
+    // verifyLink chỉ cần đọc session hiện tại.
+    await supabase.auth.refreshSession();
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      return { ok: false, error: '認証が完了していません。メールのリンクを開いてください。' };
+    }
+    const user = await publicUserFromSession(data.session);
+    if (checkIsSimulation()) setSimUser(user);
+    return { ok: true, user };
   },
 
   async resendLink(email: string): Promise<{
@@ -664,13 +654,17 @@ export const api = {
     retryAfterSeconds?: number;
     devVerifyLink?: string;
   }> {
-    const res = await fetch('/api/auth/resend-link', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+    if (checkIsSimulation()) {
+      return { ok: true };
+    }
+    if (!isSupabaseClientConfigured()) {
+      return { ok: false, error: 'Supabaseが設定されていません。' };
+    }
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
     });
-    const { ok, status, data } = await parseJson<{ error?: string; retryAfterSeconds?: number }>(res);
-    if (!ok) return { ok: false, error: data?.error || authErrorMessage(status), retryAfterSeconds: data?.retryAfterSeconds };
-    return { ok: true, ...data };
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
   },
 };
