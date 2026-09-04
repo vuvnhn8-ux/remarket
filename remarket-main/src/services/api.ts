@@ -53,6 +53,38 @@ function checkIsSimulation(): boolean {
 // Simulated slight network latency for realistic feel in Simulation Mode
 const simulateDelay = (ms = 120) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * Parse JSON response an toàn — KHÔNG bao giờ throw lỗi "Unexpected token" khi
+ * body không phải JSON (VD: static host không có backend trả trang 404 HTML).
+ * Trả về { ok, status, data } để caller đưa ra thông báo lỗi rõ ràng.
+ */
+async function parseJson<T = any>(res: Response): Promise<{ ok: boolean; status: number; data: T }> {
+  let data: any = {};
+  const text = await res.text();
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = null;
+    }
+  }
+  return { ok: res.ok, status: res.status, data };
+}
+
+/** Map HTTP status → thông báo tiếng Nhật rõ ràng, tránh hiện lỗi JSON thô. */
+function authErrorMessage(status: number): string {
+  switch (status) {
+    case 404:
+      return 'サーバーが見つかりません。この環境（デモ/静的サイト）ではご利用いただけません。';
+    case 502:
+      return 'メール送信サーバーに接続できませんでした。時間をおいてお試しください。';
+    case 429:
+      return '操作が多すぎます。時間をおいてお試しください。';
+    default:
+      return '通信エラーが発生しました。時間をおいてお試しください。';
+  }
+}
+
 export const api = {
   // ================= PRODUCTS =================
   async getProducts(params?: {
@@ -547,8 +579,8 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'ログインに失敗しました。');
+    const { ok, status, data } = await parseJson<{ error?: string; user?: PublicUser }>(res);
+    if (!ok) throw new Error(data?.error || authErrorMessage(status));
     return data.user;
   },
 
@@ -568,8 +600,8 @@ export const api = {
     }
     const res = await fetch('/api/auth/me');
     if (!res.ok) return null;
-    const data = await res.json();
-    return data.user || null;
+    const { data } = await parseJson<{ user?: PublicUser | null }>(res);
+    return data?.user || null;
   },
 
   // ================= REGISTER + EMAIL MAGIC LINK (AGENTS.md mục 8) =================
@@ -593,8 +625,8 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     });
-    const data = await res.json();
-    if (!res.ok) return { ok: false, error: data.error || '登録に失敗しました。' };
+    const { ok, status, data } = await parseJson(res);
+    if (!ok) return { ok: false, error: data?.error || authErrorMessage(status) };
     // Simulation mode: client dùng bản simStore riêng (khác server). Ghi thêm vào
     // simStore client để luồng đăng nhập simulation tìm được tài khoản vừa tạo sau
     // khi xác thực xong. Trạng thái "chưa verify" do server gate (login bị chặn).
@@ -618,8 +650,8 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
     });
-    const data = await res.json();
-    if (!res.ok) return { ok: false, error: data.error || '認証に失敗しました。' };
+    const { ok, status, data } = await parseJson<{ error?: string; user?: PublicUser }>(res);
+    if (!ok) return { ok: false, error: data?.error || authErrorMessage(status) };
     // Magic link 1-click -> tự đăng nhập. Live: server đã set cookie httpOnly.
     // Simulation: ghi session local để AuthContext nhận biết.
     if (checkIsSimulation() && data.user) setSimUser(data.user);
@@ -637,8 +669,8 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
-    const data = await res.json();
-    if (!res.ok) return { ok: false, error: data.error || '再送信に失敗しました。', retryAfterSeconds: data.retryAfterSeconds };
+    const { ok, status, data } = await parseJson<{ error?: string; retryAfterSeconds?: number }>(res);
+    if (!ok) return { ok: false, error: data?.error || authErrorMessage(status), retryAfterSeconds: data?.retryAfterSeconds };
     return { ok: true, ...data };
   },
 };
